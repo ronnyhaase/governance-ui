@@ -131,6 +131,7 @@ import InitStrike from './components/instructions/Dual/InitStrike'
 import IdlSetBuffer from './components/instructions/Mango/MangoV4/IdlSetBuffer'
 import { useRealmQuery } from '@hooks/queries/realm'
 import { usePrevious } from '@hooks/usePrevious'
+import Tabs from '@components/Tabs'
 
 const TITLE_LENGTH_LIMIT = 130
 
@@ -178,6 +179,7 @@ const New = () => {
 
   const { symbol, realmInfo, canChooseWhoVote } = useRealm()
   const { availableInstructions } = useGovernanceAssets()
+  const [proposalTypeTab, setProposalTypeTab] = useState('Yes / No (2 Choices)')
   const [voteByCouncil, setVoteByCouncil] = useState(false)
   const [form, setForm] = useState({
     title: typeof router.query['t'] === 'string' ? router.query['t'] : '',
@@ -576,55 +578,74 @@ const New = () => {
             </div>
           </div>
           <div className="pt-2">
-            <div className="pb-4 relative min-h-[100px]">
-              <Input
-                label="Title"
-                placeholder="Title of your proposal"
-                value={form.title}
-                type="text"
-                error={formErrors['title']}
-                showErrorState={titleTooLong}
-                onChange={(evt) =>
-                  handleSetForm({
-                    value: evt.target.value,
-                    propertyName: 'title',
-                  })
-                }
-              />
-              <div className="max-w-lg w-full absolute bottom-4 left-0">
-                <div
-                  className={classNames(
-                    'absolute',
-                    'bottom-0',
-                    'right-0',
-                    'text-xs',
-                    titleTooLong ? 'text-error-red' : 'text-white/50'
-                  )}
-                >
-                  {form.title.length} / {TITLE_LENGTH_LIMIT}
+            <div className="border-b border-fgd-4 mb-8 pb-4 pt-2">
+              <div>
+                <label className="pb-2" htmlFor="proposal-title">
+                  <div className="font-bold">What is the name of your proposal?</div>
+                  <div className="text-white/50">asdf asdf assf</div>
+                </label>
+                <div className="pb-4 relative min-h-[100px]">
+                  <Input
+                    id="proposal-title"
+                    name="proposal-title"
+                    placeholder="e.g. Send USDC to wallet address"
+                    value={form.title}
+                    type="text"
+                    error={formErrors['title']}
+                    showErrorState={titleTooLong}
+                    onChange={(evt) =>
+                      handleSetForm({
+                        value: evt.target.value,
+                        propertyName: 'title',
+                      })
+                    }
+                  />
+                  <div className="max-w-lg w-full absolute bottom-4 left-0">
+                    <div
+                      className={classNames(
+                        'absolute',
+                        'bottom-0',
+                        'right-0',
+                        'text-xs',
+                        titleTooLong ? 'text-error-red' : 'text-white/50'
+                      )}
+                    >
+                      {form.title.length} / {TITLE_LENGTH_LIMIT}
+                    </div>
+                  </div>
                 </div>
               </div>
+              <div>
+                <label className="pb-2" htmlFor="proposal-desc">
+                  <div className="font-bold">How would you describe this proposal?</div>
+                  <div className="text-white/50">
+                    It can be helpful to give your DAO’s members a deeper understanding of your
+                    proposal’s intent and how a successful vote will be implemented.
+                  </div>
+                </label>
+                <Textarea
+                  id="proposal-desc"
+                  name="proposal-desc"
+                  className="mb-3"
+                  placeholder="e.g. My proposal is important because... (optional)"
+                  value={form.description}
+                  onChange={(evt) =>
+                    handleSetForm({
+                      value: evt.target.value,
+                      propertyName: 'description',
+                    })
+                  }
+                />
+              </div>
+              {canChooseWhoVote && (
+                <VoteBySwitch
+                  checked={voteByCouncil}
+                  onChange={() => {
+                    setVoteByCouncil(!voteByCouncil)
+                  }}
+                ></VoteBySwitch>
+              )}
             </div>
-            <Textarea
-              className="mb-3"
-              label="Description"
-              placeholder="Description of your proposal or use a github gist link (optional)"
-              value={form.description}
-              onChange={(evt) =>
-                handleSetForm({
-                  value: evt.target.value,
-                  propertyName: 'description',
-                })
-              }
-            ></Textarea>
-            {canChooseWhoVote && (
-              <VoteBySwitch
-                checked={voteByCouncil}
-                onChange={() => {
-                  setVoteByCouncil(!voteByCouncil)
-                }}
-              ></VoteBySwitch>
-            )}
             <NewProposalContext.Provider
               value={{
                 instructionsData,
@@ -634,62 +655,74 @@ const New = () => {
                 voteByCouncil,
               }}
             >
-              <h2>Transactions</h2>
-              {instructionsData.map((instruction, index) => {
-                // copy index to keep its value for onChange function
-                const idx = index
+              <Tabs
+                activeTab={proposalTypeTab}
+                onChange={(t) => setProposalTypeTab(t)}
+                tabs={["Yes / No (2 Choices)", "Multiple choice (2–10 choices)"]}
+              />
+              {proposalTypeTab === 'Yes / No (2 Choices)' && (
+                <>
+                  <h2>Transactions</h2>
+                  {instructionsData.map((instruction, index) => {
+                    // copy index to keep its value for onChange function
+                    const idx = index
 
-                return (
-                  <div
-                    key={idx}
-                    className="mb-3 border border-fgd-4 p-4 md:p-6 rounded-lg"
-                  >
-                    <StyledLabel>Instruction {idx + 1}</StyledLabel>
-
-                    <SelectInstructionType
-                      instructionTypes={availableInstructions}
-                      onChange={(instructionType) =>
-                        setInstructionType({
-                          value: instructionType,
-                          idx,
-                        })
-                      }
-                      selectedInstruction={instruction.type}
-                    />
-
-                    <div className="flex items-end pt-4">
-                      <InstructionContentContainer
-                        idx={idx}
-                        instructionsData={instructionsData}
+                    return (
+                      <div
+                        key={idx}
+                        className="mb-3 border border-fgd-4 p-4 md:p-6 rounded-lg"
                       >
-                        {getCurrentInstruction({
-                          typeId: instruction.type?.id,
-                          index: idx,
-                        })}
-                      </InstructionContentContainer>
-                      {idx !== 0 && (
-                        <LinkButton
-                          className="flex font-bold items-center ml-4 text-fgd-1 text-sm"
-                          onClick={() => removeInstruction(idx)}
-                        >
-                          <XCircleIcon className="h-5 mr-1.5 text-red w-5" />
-                          Remove
-                        </LinkButton>
-                      )}
-                    </div>
+                        <StyledLabel>Instruction {idx + 1}</StyledLabel>
+
+                        <SelectInstructionType
+                          instructionTypes={availableInstructions}
+                          onChange={(instructionType) =>
+                            setInstructionType({
+                              value: instructionType,
+                              idx,
+                            })
+                          }
+                          selectedInstruction={instruction.type}
+                        />
+
+                        <div className="flex items-end pt-4">
+                          <InstructionContentContainer
+                            idx={idx}
+                            instructionsData={instructionsData}
+                          >
+                            {getCurrentInstruction({
+                              typeId: instruction.type?.id,
+                              index: idx,
+                            })}
+                          </InstructionContentContainer>
+                          {idx !== 0 && (
+                            <LinkButton
+                              className="flex font-bold items-center ml-4 text-fgd-1 text-sm"
+                              onClick={() => removeInstruction(idx)}
+                            >
+                              <XCircleIcon className="h-5 mr-1.5 text-red w-5" />
+                              Remove
+                            </LinkButton>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div className="flex justify-end mt-4 mb-8 px-6">
+                    <LinkButton
+                      className="flex font-bold items-center text-fgd-1 text-sm"
+                      onClick={addInstruction}
+                    >
+                      <PlusCircleIcon className="h-5 mr-1.5 text-green w-5" />
+                      Add instruction
+                    </LinkButton>
                   </div>
-                )
-              })}
+                </>
+              )}
+              {proposalTypeTab === 'Multiple choice (2–10 choices)' && (
+                <h1>Lesss gooo!</h1>
+              )}
             </NewProposalContext.Provider>
-            <div className="flex justify-end mt-4 mb-8 px-6">
-              <LinkButton
-                className="flex font-bold items-center text-fgd-1 text-sm"
-                onClick={addInstruction}
-              >
-                <PlusCircleIcon className="h-5 mr-1.5 text-green w-5" />
-                Add instruction
-              </LinkButton>
-            </div>
             <div className="border-t border-fgd-4 flex justify-end mt-6 pt-6 space-x-4">
               <SecondaryButton
                 disabled={isLoading}
